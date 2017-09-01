@@ -2,14 +2,18 @@ package io.interactionlab.tutorial_mobile_example;
 
 import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.graphics.PointF;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import java.io.BufferedInputStream;
@@ -36,13 +40,14 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     private DrawView drawView;
     private PointF tmpPoint = new PointF();
 
+    private final static String SHARED_PREF_ID = "tutorial_mobile_example";
+
     // Download view
     private ProgressDialog progrssDialog;
     private Button downloadButton;
 
     // Classifier
     private NumberClassifier numberClassifier;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,7 +65,13 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             @Override
             public void onClick(View v) {
                 int classification = classifyNumber();
-                tvResult.setText("Detected = " + classification);
+
+                if (classification == -1) {
+                    tvResult.setText("Please load model first.");
+                } else {
+                    tvResult.setText("Detected = " + classification);
+                }
+
             }
         });
 
@@ -76,22 +87,54 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         downloadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new FileDownloadTask().execute("<TODO: DOWNLOAD URL>");
+                // retrieve saved server url
+                SharedPreferences prefs = getSharedPreferences(SHARED_PREF_ID, MODE_PRIVATE);
+                String serverURL = prefs.getString("server", "http://");
+
+                new FileDownloadTask().execute(serverURL);
             }
         });
         tvResult = (TextView) findViewById(R.id.text_result);
 
-        // Load initial model from the assets folder of the apk.
-        numberClassifier = new NumberClassifier("expert-graph.pb", getApplicationContext());
+        promptServerUrl();
     }
 
+
+    private void promptServerUrl() {
+        SharedPreferences prefs = getSharedPreferences(SHARED_PREF_ID, MODE_PRIVATE);
+        String servername = prefs.getString("server", "http://");
+
+        final EditText edtText = new EditText(this);
+        edtText.setText(servername);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Server address");
+        builder.setMessage("Please enter server address:");
+        builder.setCancelable(false);
+        builder.setView(edtText);
+        builder.setNeutralButton("Continue", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                SharedPreferences.Editor editor = getSharedPreferences(SHARED_PREF_ID, MODE_PRIVATE).edit();
+                editor.putString("server", edtText.getText().toString());
+                editor.apply();
+            }
+        });
+        builder.show();
+    }
 
     private int classifyNumber() {
         // Retrieve 28x28 image.
         float pixels[] = drawView.getPixelData();
 
         // Classify.
-        return numberClassifier.classify(pixels);
+
+        int idx = -1;
+        if (numberClassifier != null) {
+            idx = numberClassifier.classify(pixels);
+        }
+
+        return idx;
     }
 
     @Override
@@ -207,6 +250,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             int count;
             try {
                 URL url = new URL(f_url[0]);
+
                 URLConnection conection = url.openConnection();
                 conection.connect();
                 int lenghtOfFile = conection.getContentLength();

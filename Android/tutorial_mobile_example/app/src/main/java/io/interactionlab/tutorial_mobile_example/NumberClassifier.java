@@ -37,12 +37,12 @@ public class NumberClassifier {
         float[] outputs = new float[10];
 
         // Feed image into the model and fetch the results.
-        inferenceInterface.feed(inputName, pixels, 1, 28, 28, 1);
+        inferenceInterface.feed(inputName, pixels, 1, 784);
         inferenceInterface.run(outputNodes, false);
         inferenceInterface.fetch(outputName, outputs);
 
         // Convert one-hot encodd result to an int (= detected class)
-        float max = outputs[0];
+        float max = Float.MIN_VALUE;
         int idx = -1;
         for (int i = 1; i < outputs.length; i++) {
             if (outputs[i] > max) {
