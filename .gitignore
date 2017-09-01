@@ -1,3 +1,7 @@
+# Ignore MNIST data and model
+mnist_data/
+mnist_model/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
