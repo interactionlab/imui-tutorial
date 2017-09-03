@@ -3,13 +3,14 @@ package io.interactionlab.tutorial_mobile_example;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.PointF;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
@@ -45,14 +46,24 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     // Download view
     private ProgressDialog progrssDialog;
     private Button downloadButton;
+    private Button infoButton;
+
 
     // Classifier
     private NumberClassifier numberClassifier;
+
+    // File download path
+
+    private String MODEL_FILE = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        File path = MainActivity.this.getExternalFilesDir(null);
+        MODEL_FILE = path.getAbsolutePath() + "/downloaded_model.pb";
+
 
         drawModel = new DrawModel(PIXEL_WIDTH, PIXEL_WIDTH);
 
@@ -83,7 +94,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             }
         });
 
-        downloadButton = (Button) findViewById(R.id.button_test);
+        downloadButton = (Button) findViewById(R.id.button_download);
         downloadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -94,6 +105,37 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 new FileDownloadTask().execute(serverURL);
             }
         });
+
+        infoButton = (Button) findViewById(R.id.button_info);
+        infoButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
+                alertDialog.setTitle("Info");
+                alertDialog.setMessage("To use the app you need to train your own MNIST models. You can use the following python code to train a model: https://github.com/interactionlab/imui-tutorial/blob/master/Step_1_MNIST_Classification.ipynb.");
+                alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        });
+                alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "Open Link",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                String url = "https://github.com/interactionlab/imui-tutorial/blob/master/Step_1_MNIST_Classification.ipynb";
+                                Intent i = new Intent(Intent.ACTION_VIEW);
+                                i.setData(Uri.parse(url));
+                                startActivity(i);
+                                dialog.dismiss();
+                            }
+                        });
+
+
+                alertDialog.show();
+            }
+        });
+
+
         tvResult = (TextView) findViewById(R.id.text_result);
 
         promptServerUrl();
@@ -225,8 +267,8 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 progrssDialog.setMessage("Downloading model. Please wait...");
                 progrssDialog.setIndeterminate(false);
                 progrssDialog.setMax(100);
+                progrssDialog.setCancelable(false);
                 progrssDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-                progrssDialog.setCancelable(true);
                 progrssDialog.show();
                 return progrssDialog;
             default:
@@ -249,6 +291,17 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         protected String doInBackground(String... f_url) {
             int count;
             try {
+                // delete previous model first if available
+                File fdelete = new File(MODEL_FILE);
+                if (fdelete.exists()) {
+                    if (fdelete.delete()) {
+                        System.out.println("file Deleted.");
+                    } else {
+                        System.out.println("file not Deleted.");
+                    }
+                }
+
+
                 URL url = new URL(f_url[0]);
 
                 URLConnection conection = url.openConnection();
@@ -257,8 +310,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 InputStream input = new BufferedInputStream(url.openStream(), 8192);
 
                 // Output stream to write file
-                File pathBack = MainActivity.this.getExternalFilesDir(null);
-                OutputStream output = new FileOutputStream(pathBack.getAbsolutePath() + "/downloaded_model.pb");
+                OutputStream output = new FileOutputStream(MODEL_FILE);
 
                 byte data[] = new byte[1024];
                 long total = 0;
@@ -273,7 +325,21 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 input.close();
 
             } catch (Exception e) {
-                Log.e("Error: ", e.getMessage());
+                MainActivity.this.runOnUiThread(new Runnable() {
+                    public void run() {
+                        AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
+                        alertDialog.setTitle("Invalid file.");
+                        alertDialog.setMessage("Click OK to enter a new server URL.");
+                        alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
+                                new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        dialog.dismiss();
+                                        promptServerUrl();
+                                    }
+                                });
+                        alertDialog.show();
+                    }
+                });
             }
 
             return null;
@@ -293,12 +359,15 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
             FileInputStream fileInputStream = null;
             try {
-                fileInputStream = new FileInputStream(pathBack.getAbsolutePath() + "/downloaded_model.pb");
+                fileInputStream = new FileInputStream(MODEL_FILE);
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
 
-            numberClassifier = new NumberClassifier(fileInputStream);
+            if (fileInputStream != null) {
+                numberClassifier = new NumberClassifier(fileInputStream);
+            }
+
         }
 
     }
