@@ -3,6 +3,8 @@ One key feature of TensorFlow includes the possibility to compile the trained mo
 
 The compiled Android app to test the model trained in Step 1 is available in the [Android Store](https://play.google.com/store/apps/details?id=io.interactionlab.tutorial_mobile_example).
 
+<img src="./img/screenshot_download.png" height="100" /> <img src="./img/screenshot_detect.png" height="100" />
+
 This tutorial will be held at:
 * [MobileHCI'17, 4th September 2017, 11:15-13:15, Vienna](https://interactionlab.io/imui-mobilehci17/)
 * [Mensch und Computer 2017, 10th September 2017, 11:00-15:30, Regensburg](http://muc2017.mensch-und-computer.de/programm/tutorials-mci/)
