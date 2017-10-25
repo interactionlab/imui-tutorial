@@ -5,10 +5,10 @@ The compiled Android app to test the model trained in Step 1 is available in the
 
 <img src="./img/screenshot_download.png" height="100" /> <img src="./img/screenshot_detect.png" height="100" />
 
-+This tutorial will be/was held at:
- +* [MobileHCI'17, 4th September 2017, 11:15-13:15, Vienna, Austria](https://mobilehci.acm.org/2017/tutorials-about.html) - [Tutorial Website](https://interactionlab.io/imui-mobilehci17/)
- +* [Mensch und Computer 2017, 10th September 2017, 11:00-15:30, Regensburg, Germany](http://muc2017.mensch-und-computer.de/programm/tutorials-mci/)
- +* [MUM'17, 26th November 2017, 09:00-13:30, Stuttgart, Germany](http://www.mum-conf.org/2017/index.php?web=workshopsandtuts) - [Tutorial Website](https://interactionlab.io/imui-mum17/)
+This tutorial will be/was held at:
+* [MobileHCI'17, 4th September 2017, 11:15-13:15, Vienna, Austria](https://mobilehci.acm.org/2017/tutorials-about.html) - [Tutorial Website](https://interactionlab.io/imui-mobilehci17/)
+* [Mensch und Computer 2017, 10th September 2017, 11:00-15:30, Regensburg, Germany](http://muc2017.mensch-und-computer.de/programm/tutorials-mci/)
+* [MUM'17, 26th November 2017, 09:00-13:30, Stuttgart, Germany](http://www.mum-conf.org/2017/index.php?web=workshopsandtuts) - [Tutorial Website](https://interactionlab.io/imui-mum17/)
  
 ### Beyond the tutorial:
 As a first step, we presented a classification example. Beyond that, we want to provide a regression example which also is a plug and play example:
