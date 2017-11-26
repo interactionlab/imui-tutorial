@@ -44,7 +44,7 @@ public class NumberClassifier {
         // Convert one-hot encodd result to an int (= detected class)
         float max = Float.MIN_VALUE;
         int idx = -1;
-        for (int i = 1; i < outputs.length; i++) {
+        for (int i = 0; i < outputs.length; i++) {
             if (outputs[i] > max) {
                 max = outputs[i];
                 idx = i;
