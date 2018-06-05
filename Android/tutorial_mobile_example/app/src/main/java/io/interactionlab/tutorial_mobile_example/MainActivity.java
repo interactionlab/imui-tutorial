@@ -15,6 +15,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.io.BufferedInputStream;
@@ -30,6 +31,8 @@ import java.net.URLConnection;
 import io.interactionlab.tutorial_mobile_example.ui.DrawModel;
 import io.interactionlab.tutorial_mobile_example.ui.DrawView;
 
+import static io.interactionlab.tutorial_mobile_example.Constants.SHARED_PREF_ID;
+
 public class MainActivity extends AppCompatActivity implements View.OnTouchListener {
 
     // Variables for the draw view.
@@ -41,13 +44,15 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     private DrawView drawView;
     private PointF tmpPoint = new PointF();
 
-    private final static String SHARED_PREF_ID = "tutorial_mobile_example";
-
     // Download view
     private ProgressDialog progrssDialog;
     private Button downloadButton;
     private Button infoButton;
 
+
+    private EditText etOutput;
+    private EditText etServer;
+    private EditText etInput;
 
     // Classifier
     private NumberClassifier numberClassifier;
@@ -112,7 +117,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             public void onClick(View v) {
                 AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
                 alertDialog.setTitle("Info");
-                alertDialog.setMessage("To use the app you need to train your own MNIST models. You can use the following python code to train a model: https://github.com/interactionlab/imui-tutorial/blob/master/Step_1_MNIST_Classification.ipynb.");
+                alertDialog.setMessage("To use the app you need to train your own MNIST models. You can use the following python code to train a model: https://github.com/interactionlab/imui-tutorial/");
                 alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "OK",
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
@@ -122,7 +127,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "Open Link",
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
-                                String url = "https://github.com/interactionlab/imui-tutorial/blob/master/Step_1_MNIST_Classification.ipynb";
+                                String url = "https://github.com/interactionlab/imui-tutorial/";
                                 Intent i = new Intent(Intent.ACTION_VIEW);
                                 i.setData(Uri.parse(url));
                                 startActivity(i);
@@ -138,32 +143,59 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
         tvResult = (TextView) findViewById(R.id.text_result);
 
-        promptServerUrl();
+        promptModelSettings();
     }
 
 
-    private void promptServerUrl() {
+    private void promptModelSettings() {
         SharedPreferences prefs = getSharedPreferences(SHARED_PREF_ID, MODE_PRIVATE);
         String servername = prefs.getString("server", "http://");
-
-        final EditText edtText = new EditText(this);
-        edtText.setText(servername);
+        String inputNode = prefs.getString("input_node", "dense_1_input");
+        String outputNode = prefs.getString("output_node", "output_node0");
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Server address");
-        builder.setMessage("Please enter server address:");
-        builder.setCancelable(false);
-        builder.setView(edtText);
-        builder.setNeutralButton("Continue", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
+        //you should edit this to fit your needs
+        builder.setTitle("Enter model settings:");
+
+        final EditText etServer = new EditText(this);
+        etServer.setHint("Server Address");
+        etServer.setText(servername);
+        final EditText etInput = new EditText(this);
+        etInput.setHint("Input Node");
+        etInput.setText(inputNode);
+        final EditText etOutput = new EditText(this);
+        etOutput.setHint("Output Node");
+        etOutput.setText(outputNode);
+
+        LinearLayout lay = new LinearLayout(this);
+        lay.setOrientation(LinearLayout.VERTICAL);
+        lay.addView(etServer);
+        lay.addView(etInput);
+        lay.addView(etOutput);
+        builder.setView(lay);
+
+        // Set up the buttons
+        builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
                 SharedPreferences.Editor editor = getSharedPreferences(SHARED_PREF_ID, MODE_PRIVATE).edit();
-                editor.putString("server", edtText.getText().toString());
+                editor.putString("server", etServer.getText().toString());
+                editor.putString("input_node", etInput.getText().toString());
+                editor.putString("output_node", etOutput.getText().toString());
+
                 editor.apply();
+                dialog.cancel();
             }
         });
+
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                dialog.cancel();
+            }
+        });
+        builder.create();
         builder.show();
     }
+
 
     private int classifyNumber() {
         // Retrieve 28x28 image.
@@ -304,9 +336,9 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
                 URL url = new URL(f_url[0]);
 
-                URLConnection conection = url.openConnection();
-                conection.connect();
-                int lenghtOfFile = conection.getContentLength();
+                URLConnection connection = url.openConnection();
+                connection.connect();
+                int lenghtOfFile = connection.getContentLength();
                 InputStream input = new BufferedInputStream(url.openStream(), 8192);
 
                 // Output stream to write file
@@ -334,7 +366,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                                 new DialogInterface.OnClickListener() {
                                     public void onClick(DialogInterface dialog, int which) {
                                         dialog.dismiss();
-                                        promptServerUrl();
+                                        promptModelSettings();
                                     }
                                 });
                         alertDialog.show();
@@ -365,7 +397,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             }
 
             if (fileInputStream != null) {
-                numberClassifier = new NumberClassifier(fileInputStream);
+                numberClassifier = new NumberClassifier(fileInputStream, MainActivity.this);
             }
 
         }

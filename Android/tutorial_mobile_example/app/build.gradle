@@ -7,8 +7,8 @@ android {
         applicationId "io.interactionlab.tutorial_mobile_example"
         minSdkVersion 21
         targetSdkVersion 25
-        versionCode 1
-        versionName "1.0"
+        versionCode 3
+        versionName "1.0.2"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -27,5 +27,5 @@ dependencies {
     compile 'com.android.support:appcompat-v7:25.3.0'
     compile 'com.android.support.constraint:constraint-layout:1.0.0-beta3'
     testCompile 'junit:junit:4.12'
-    compile 'org.tensorflow:tensorflow-android:+'
+    compile 'org.tensorflow:tensorflow-android:1.4.0'
 }

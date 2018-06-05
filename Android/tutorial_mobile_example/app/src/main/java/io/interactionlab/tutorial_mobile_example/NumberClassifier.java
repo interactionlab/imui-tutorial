@@ -1,10 +1,14 @@
 package io.interactionlab.tutorial_mobile_example;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 
 import org.tensorflow.contrib.android.TensorFlowInferenceInterface;
 
 import java.io.InputStream;
+
+import static android.content.Context.MODE_PRIVATE;
+import static io.interactionlab.tutorial_mobile_example.Constants.SHARED_PREF_ID;
 
 /**
  * Created by Huy on 01/09/2017.
@@ -17,21 +21,24 @@ import java.io.InputStream;
 public class NumberClassifier {
     private TensorFlowInferenceInterface inferenceInterface;
 
+    String inputName = "input";
+    String outputName = "output";
+
     public NumberClassifier(String modelPath, Context context) {
         // Loading model from assets folder.
         inferenceInterface = new TensorFlowInferenceInterface(context.getAssets(), modelPath);
     }
 
-    public NumberClassifier(InputStream inputStream) {
+    public NumberClassifier(InputStream inputStream, Context context) {
         // Loading the model from an input stream.
         inferenceInterface = new TensorFlowInferenceInterface(inputStream);
+
+        SharedPreferences prefs = context.getSharedPreferences(SHARED_PREF_ID, MODE_PRIVATE);
+        inputName = prefs.getString("input_node", "dense_1_input");
+        outputName = prefs.getString("output_node", "output_node0");
     }
 
     public int classify(float[] pixels) {
-        // Node Names
-        String inputName = "input";
-        String outputName = "output";
-
         // Define output nodes
         String[] outputNodes = new String[]{outputName};
         float[] outputs = new float[10];
