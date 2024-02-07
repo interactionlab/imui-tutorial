@@ -2,8 +2,6 @@ package io.interactionlab.tutorial_mobile_example;
 
 import android.content.Context;
 
-import org.tensorflow.contrib.android.TensorFlowInferenceInterface;
-
 import java.io.InputStream;
 
 /**
