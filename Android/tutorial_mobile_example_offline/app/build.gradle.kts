@@ -41,8 +41,8 @@ dependencies {
     // Tensorflow Lite dependencies
     //implementation("org.tensorflow:tensorflow-lite-task-vision-play-services:0.4.2")
     //implementation("com.google.android.gms:play-services-tflite-gpu:16.2.0")
-    implementation("org.tensorflow:tensorflow-lite-task-vision:0.4.0")
+    //implementation("org.tensorflow:tensorflow-lite-task-vision:0.4.0")
     // Import the GPU delegate plugin Library for GPU inference
-    implementation("org.tensorflow:tensorflow-lite-gpu-delegate-plugin:0.4.0")
-    implementation("org.tensorflow:tensorflow-lite-gpu:2.9.0")
+    // implementation("org.tensorflow:tensorflow-lite-gpu-delegate-plugin:0.4.0")
+    implementation("org.tensorflow:tensorflow-lite:+")
 }
