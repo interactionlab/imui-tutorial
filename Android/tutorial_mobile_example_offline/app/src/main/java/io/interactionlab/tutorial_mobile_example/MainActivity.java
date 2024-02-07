@@ -46,7 +46,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         setContentView(R.layout.activity_main);
 
         File path = MainActivity.this.getExternalFilesDir(null);
-        numberClassifier = new NumberClassifier("test_model.pb", this);
+        numberClassifier = new NumberClassifier("model.tflite", this);
 
         drawModel = new DrawModel(PIXEL_WIDTH, PIXEL_WIDTH);
 

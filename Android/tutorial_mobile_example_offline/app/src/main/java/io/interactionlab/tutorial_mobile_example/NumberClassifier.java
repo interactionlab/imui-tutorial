@@ -1,11 +1,15 @@
 package io.interactionlab.tutorial_mobile_example;
 
 import android.content.Context;
+import android.content.res.AssetFileDescriptor;
 import android.util.Log;
 
 import org.tensorflow.lite.Interpreter;
 
-import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
 
 /**
  * This class demonstrates the use of the inference interface of TensorFlow.
@@ -15,20 +19,30 @@ public class NumberClassifier {
 
     private Interpreter interpreter = null;
 
+    protected MappedByteBuffer loadMappedFile(Context context, String filePath) throws IOException {
+        AssetFileDescriptor fileDescriptor = context.getAssets().openFd(filePath);
+
+        FileInputStream inputStream = new FileInputStream(fileDescriptor.getFileDescriptor());
+        FileChannel fileChannel = inputStream.getChannel();
+        long startOffset = fileDescriptor.getStartOffset();
+        long declaredLength = fileDescriptor.getDeclaredLength();
+        return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
+    }
+
     public NumberClassifier(String modelPath, Context context) {
+        MappedByteBuffer myMappedBuffer = null;
         try {
-            interpreter = new Interpreter(new File(modelPath));
+            myMappedBuffer = loadMappedFile(context, modelPath);
+        } catch (IOException e) {
+            Log.e("NumberClassifier", "Error #002: "  + e.toString());
+        }
+
+        try {
+            interpreter = new Interpreter(myMappedBuffer);
         } catch (Exception e) {
             Log.e("NumberClassifier", "Error #001: "  + e.toString());
         }
-        //inferenceInterface = new TensorFlowInferenceInterface(context.getAssets(), modelPath);
     }
-
-    /*public NumberClassifier(InputStream inputStream) {
-        // Loading the model from an input stream.
-        inferenceInterface = new TensorFlowInferenceInterface(inputStream);
-    }*/
-
     public int classify(float[] pixels) {
 
         if (interpreter == null){
