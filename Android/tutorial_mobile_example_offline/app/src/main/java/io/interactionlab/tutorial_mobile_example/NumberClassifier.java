@@ -5,6 +5,7 @@ import android.content.res.AssetFileDescriptor;
 import android.util.Log;
 
 import org.tensorflow.lite.Interpreter;
+import org.tensorflow.lite.support.common.FileUtil;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -19,52 +20,58 @@ public class NumberClassifier {
 
     private Interpreter interpreter = null;
 
-    protected MappedByteBuffer loadMappedFile(Context context, String filePath) throws IOException {
-        AssetFileDescriptor fileDescriptor = context.getAssets().openFd(filePath);
-
-        FileInputStream inputStream = new FileInputStream(fileDescriptor.getFileDescriptor());
-        FileChannel fileChannel = inputStream.getChannel();
-        long startOffset = fileDescriptor.getStartOffset();
-        long declaredLength = fileDescriptor.getDeclaredLength();
-        return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
-    }
-
     public NumberClassifier(String modelPath, Context context) {
         MappedByteBuffer myMappedBuffer = null;
+
         try {
-            myMappedBuffer = loadMappedFile(context, modelPath);
+            myMappedBuffer = FileUtil.loadMappedFile(context, modelPath);
         } catch (IOException e) {
             Log.e("NumberClassifier", "Error #002: "  + e.toString());
+            return;
         }
 
         try {
             interpreter = new Interpreter(myMappedBuffer);
         } catch (Exception e) {
             Log.e("NumberClassifier", "Error #001: "  + e.toString());
+            return;
+        }
+        Log.v("NumberClassifier", "Load model successful.");
+
+        for (String s : interpreter.getSignatureKeys()) {
+            Log.d("NumberClassifier - Model Debug", "SignatureKeys: " + s);
+        }
+        Log.d("NumberClassifier - Model Debug",  "InputTensorCount: " + interpreter.getInputTensorCount());
+        for (int dim : interpreter.getInputTensor(0).shape()) {
+            Log.d("NumberClassifier - Model Debug", "Input Shape: " +dim);
+        }
+        Log.d("NumberClassifier - Model Debug",  "OutputTensorCount: " + interpreter.getOutputTensorCount());
+        for (int dim : interpreter.getOutputTensor(0).shape()) {
+            Log.d("NumberClassifier - Model Debug", "Output Shape: " +dim);
         }
     }
     public int classify(float[] pixels) {
-
+        Log.d("NumberClassifier", "PixelData - Length:" + pixels.length);
         if (interpreter == null){
             Log.w("NumberClassifier", "interpreter not ready.");
             return -1;
         }
-        // Node Names
-        //String inputName = "dense_1_input";
-        //String outputName = "output_node0";
 
-        // Define output nodes
-        //String[] outputNodes = new String[]{outputName};
-        //float[] outputs = new float[10];
-        //inferenceInterface.feed(inputName, pixels, 1, 784);
-        //inferenceInterface.run(outputNodes);
-        //inferenceInterface.fetch(outputName, outputs);
+        float[][][] input = new float[1][1][28*28];  // Input tensor shape is [2].
+        input[0][0] = pixels;
+        float[][][] output = new float[1][1][10];  // Output tensor shape is [3, 2].
+        output[0][0]  = new float[]{0,0,0,0,0,0,0,0,0,0};
 
-        float[][] input = {pixels};  // Input tensor shape is [2].
-        float[][] output = new float[1][10];  // Output tensor shape is [3, 2].
-        interpreter.run(input, output);
+        Log.v("NumberClassifier", "Feeding into model.");
+        try {
+            interpreter.run(input[0], output[0]);
+        } catch (Exception e){
+            Log.e("NumberClassifier", "Error #003: "  + e.toString());
+            return -1;
+        }
+        Log.v("NumberClassifier", "Inference done.");
 
-        float[] outputs = output[0];
+        float[] outputs = output[0][0];
 
         // Convert one-hot encoded result to an int (= detected class)
         float max = Float.MIN_VALUE;

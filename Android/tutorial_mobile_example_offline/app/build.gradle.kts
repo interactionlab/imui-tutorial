@@ -45,4 +45,5 @@ dependencies {
     // Import the GPU delegate plugin Library for GPU inference
     // implementation("org.tensorflow:tensorflow-lite-gpu-delegate-plugin:0.4.0")
     implementation("org.tensorflow:tensorflow-lite:+")
+    implementation("org.tensorflow:tensorflow-lite-support:+")
 }
