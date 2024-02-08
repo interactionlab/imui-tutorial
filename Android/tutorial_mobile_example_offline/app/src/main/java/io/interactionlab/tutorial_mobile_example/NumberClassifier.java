@@ -57,10 +57,9 @@ public class NumberClassifier {
             return -1;
         }
 
-        float[][][] input = new float[1][1][28*28];  // Input tensor shape is [2].
+        float[][][] input = new float[1][1][28*28];
         input[0][0] = pixels;
-        float[][][] output = new float[1][1][10];  // Output tensor shape is [3, 2].
-        output[0][0]  = new float[]{0,0,0,0,0,0,0,0,0,0};
+        float[][][] output = new float[1][1][10];
 
         Log.v("NumberClassifier", "Feeding into model.");
         try {
