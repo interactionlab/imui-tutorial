@@ -64,7 +64,7 @@ public class NumberClassifier {
 
         Log.v("NumberClassifier", "Feeding into model.");
         try {
-            interpreter.run(input[0], output[0]);
+            interpreter.run(input, output);
         } catch (Exception e){
             Log.e("NumberClassifier", "Error #003: "  + e.toString());
             return -1;
