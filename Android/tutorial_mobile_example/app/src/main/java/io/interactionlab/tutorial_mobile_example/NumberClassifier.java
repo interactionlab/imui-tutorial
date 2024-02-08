@@ -82,6 +82,11 @@ public class NumberClassifier {
             return -1;
         }
 
+        // Scale input from [0 - 255] to [-1 - 1], if the training is different, this needs to change too.
+        for(int a = 0; a < pixels.length; a++) {
+            pixels[a] = pixels[a]/127.5f-1.0f;
+        }
+
         float[][][] input = new float[1][1][28*28];
         input[0][0] = pixels;
         float[][][] output = new float[1][1][10];
