@@ -1,45 +1,81 @@
 package io.interactionlab.tutorial_mobile_example;
 
 import android.content.Context;
+import android.content.res.AssetFileDescriptor;
+import android.util.Log;
 
-import org.tensorflow.contrib.android.TensorFlowInferenceInterface;
+import org.tensorflow.lite.Interpreter;
+import org.tensorflow.lite.support.common.FileUtil;
 
-import java.io.InputStream;
-
-/**
- * Created by Huy on 01/09/2017.
- */
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
 
 /**
  * This class demonstrates the use of the inference interface of TensorFlow.
  * The model (protobuf file) can either be loaded from the assets folder of the APK, or using an InputStream.
  */
 public class NumberClassifier {
-    private TensorFlowInferenceInterface inferenceInterface;
+
+    private Interpreter interpreter = null;
 
     public NumberClassifier(String modelPath, Context context) {
-        // Loading model from assets folder.
-        inferenceInterface = new TensorFlowInferenceInterface(context.getAssets(), modelPath);
-    }
+        MappedByteBuffer myMappedBuffer = null;
 
-    public NumberClassifier(InputStream inputStream) {
-        // Loading the model from an input stream.
-        inferenceInterface = new TensorFlowInferenceInterface(inputStream);
-    }
+        try {
+            myMappedBuffer = FileUtil.loadMappedFile(context, modelPath);
+        } catch (IOException e) {
+            Log.e("NumberClassifier", "Error #002: "  + e.toString());
+            return;
+        }
 
+        try {
+            interpreter = new Interpreter(myMappedBuffer);
+        } catch (Exception e) {
+            Log.e("NumberClassifier", "Error #001: "  + e.toString());
+            return;
+        }
+        Log.v("NumberClassifier", "Load model successful.");
+
+        for (String s : interpreter.getSignatureKeys()) {
+            Log.d("NumberClassifier - Model Debug", "SignatureKeys: " + s);
+        }
+        Log.d("NumberClassifier - Model Debug",  "InputTensorCount: " + interpreter.getInputTensorCount());
+        for (int dim : interpreter.getInputTensor(0).shape()) {
+            Log.d("NumberClassifier - Model Debug", "Input Shape: " +dim);
+        }
+        Log.d("NumberClassifier - Model Debug",  "OutputTensorCount: " + interpreter.getOutputTensorCount());
+        for (int dim : interpreter.getOutputTensor(0).shape()) {
+            Log.d("NumberClassifier - Model Debug", "Output Shape: " +dim);
+        }
+    }
     public int classify(float[] pixels) {
-        // Node Names
-        String inputName = "dense_1_input";
-        String outputName = "output_node0";
+        Log.d("NumberClassifier", "PixelData - Length:" + pixels.length);
+        if (interpreter == null){
+            Log.w("NumberClassifier", "interpreter not ready.");
+            return -1;
+        }
 
-        // Define output nodes
-        String[] outputNodes = new String[]{outputName};
-        float[] outputs = new float[10];
+        // Scale input from [0 - 255] to [-1 - 1], if the training is different, this needs to change too.
+        for(int a = 0; a < pixels.length; a++) {
+            pixels[a] = pixels[a]/127.5f-1.0f;
+        }
 
-        // Feed image into the model and fetch the results.
-        inferenceInterface.feed(inputName, pixels, 1, 784);
-        inferenceInterface.run(outputNodes);
-        inferenceInterface.fetch(outputName, outputs);
+        float[][][] input = new float[1][1][28*28];
+        input[0][0] = pixels;
+        float[][][] output = new float[1][1][10];
+
+        Log.v("NumberClassifier", "Feeding into model.");
+        try {
+            interpreter.run(input, output);
+        } catch (Exception e){
+            Log.e("NumberClassifier", "Error #003: "  + e.toString());
+            return -1;
+        }
+        Log.v("NumberClassifier", "Inference done.");
+
+        float[] outputs = output[0][0];
 
         // Convert one-hot encoded result to an int (= detected class)
         float max = Float.MIN_VALUE;
@@ -50,7 +86,6 @@ public class NumberClassifier {
                 idx = i;
             }
         }
-
         return idx;
     }
 }
